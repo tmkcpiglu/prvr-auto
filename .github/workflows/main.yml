@@ -13,16 +13,19 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
+      
       - name: Install Kaggle API
         run: pip install kaggle
-      - name: Create Auth
-        run: |
-          mkdir -p ~/.kaggle
-          echo "${{ secrets.KAGGLE_API_TOKEN }}" > ~/.kaggle/access_token
-          chmod 600 ~/.kaggle/access_token
+
       - name: Inject Secrets and Push
+        env:
+          # This line tells the Kaggle CLI to use your token directly
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         run: |
+          # 1. Swap the placeholders in your script with your actual secrets
           sed -i "s|REPLACE_COOKIE|${{ secrets.INSTA_COOKIE }}|g" prvr_script.py
           sed -i "s|REPLACE_THREAD|${{ secrets.THREAD_ID }}|g" prvr_script.py
           sed -i "s|REPLACE_NAME|${{ secrets.TARGET_NAME }}|g" prvr_script.py
+          
+          # 2. Push the kernel to Kaggle using the token in the environment
           kaggle kernels push -p .
