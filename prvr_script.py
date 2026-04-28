@@ -4,13 +4,13 @@ import sys
 import os
 import time
 
-# 🛠️ CRITICAL: FORCE INSTALL DEPENDENCIES
+# 🛠️ ATOMIC ENVIRONMENT PREP
 def prepare_environment():
-    print("🔧 Installing Titan Dependencies...", flush=True)
+    print("🔧 Installing Titan Stealth & Selenium...", flush=True)
     try:
-        # We include webdriver-manager only as a secondary fallback
+        # We only need these two; Selenium 4.10+ handles its own drivers
         subprocess.check_call([sys.executable, "-m", "pip", "install", 
-                               "selenium", "selenium-stealth", "webdriver-manager"])
+                               "selenium", "selenium-stealth"])
         print("✅ Environment Ready.", flush=True)
     except Exception as e:
         print(f"❌ Installation Failed: {e}", flush=True)
@@ -25,12 +25,12 @@ from selenium.webdriver.chrome.service import Service
 from selenium_stealth import stealth
 
 # --- ⚙️ PILLAR CONFIG ---
-THREADS = 4             # Optimized for Kaggle 30GB RAM
+THREADS = 4             # Optimized for 30GB RAM
 PULSE_DELAY = 600       # 0.6s Stability
 TOTAL_DURATION = 40000  # ~11 Hours
 
 def get_driver():
-    print("🛰️ Auto-Detecting Chrome Environment...", flush=True)
+    print("🛰️ Handshaking with Kaggle Chrome...", flush=True)
     options = Options()
     options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
@@ -38,39 +38,24 @@ def get_driver():
     options.add_argument("--disable-gpu")
     options.add_argument("--remote-debugging-port=9222")
     
-    # NOTE: binary_location is removed to allow Selenium to auto-detect system Chrome
-    
-    driver = None
-    
-    # Strategy 1: Built-in Selenium Manager (Zero-Config)
+    # 🔱 THE "ZERO-PATH" STRATEGY
+    # By omitting Service() and ChromeDriverManager, Selenium 4 uses its 
+    # internal Manager to find the binary and driver automatically.
     try:
-        print("📥 Strategy 1: Launching with Built-in Manager...", flush=True)
         driver = webdriver.Chrome(options=options)
-        print("✅ Strategy 1 Success.", flush=True)
-    except Exception as e1:
-        print(f"⚠️ Strategy 1 Failed: {e1}", flush=True)
-        
-        # Strategy 2: Webdriver Manager Fallback
-        try:
-            print("📁 Strategy 2: Falling back to Webdriver Manager...", flush=True)
-            from webdriver_manager.chrome import ChromeDriverManager
-            service = Service(ChromeDriverManager().install())
-            driver = webdriver.Chrome(service=service, options=options)
-            print("✅ Strategy 2 Success.", flush=True)
-        except Exception as e2:
-            print(f"🛑 ALL STRATEGIES FAILED. Ensure Internet is ON in Kaggle Settings.", flush=True)
-            return None
-
-    if driver:
+        print("✅ Titan Engine Linked Successfully.", flush=True)
         stealth(driver, languages=["en-US"], vendor="Google Inc.", platform="Linux armv8l", fix_hairline=True)
-    return driver
+        return driver
+    except Exception as e:
+        print(f"❌ Driver Auto-Detection Failed: {e}", flush=True)
+        return None
 
 def run_agent(agent_id, cookie, target_id, target_name):
     print(f"🚀 [Agent {agent_id}] Initializing...", flush=True)
     driver = get_driver()
     
     if not driver:
-        print(f"🛑 [Agent {agent_id}] Driver creation failed.", flush=True)
+        print(f"🛑 [Agent {agent_id}] Engine failure. Skipping.", flush=True)
         return
 
     try:
@@ -128,12 +113,12 @@ def run_agent(agent_id, cookie, target_id, target_name):
         if driver: driver.quit()
 
 if __name__ == "__main__":
-    # Secrets injected by GitHub Action
+    # Fetching secrets injected by GitHub Action
     COOKIE = "REPLACE_COOKIE"
     THREAD = "REPLACE_THREAD"
     NAME = "REPLACE_NAME"
     
-    print(f"🔱 P R V R PAPA SYSTEM INITIALIZED (v130.12)", flush=True)
+    print(f"🔱 TITAN SYSTEM INITIALIZED (v130.14)", flush=True)
     
     threads = []
     for i in range(THREADS):
