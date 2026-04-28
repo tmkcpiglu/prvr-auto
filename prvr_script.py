@@ -4,10 +4,11 @@ import sys
 import os
 import time
 
-# 🛠️ CRITICAL: FORCE INSTALL DEPENDENCIES BEFORE IMPORTS
+# 🛠️ CRITICAL: FORCE INSTALL DEPENDENCIES
 def prepare_environment():
     print("🔧 Installing Titan Dependencies...", flush=True)
     try:
+        # We include webdriver-manager only as a secondary fallback
         subprocess.check_call([sys.executable, "-m", "pip", "install", 
                                "selenium", "selenium-stealth", "webdriver-manager"])
         print("✅ Environment Ready.", flush=True)
@@ -21,16 +22,15 @@ import re, random, threading, gc
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium_stealth import stealth
 
 # --- ⚙️ PILLAR CONFIG ---
-THREADS = 4             # Optimized for 30GB RAM
+THREADS = 4             # Optimized for Kaggle 30GB RAM
 PULSE_DELAY = 600       # 0.6s Stability
 TOTAL_DURATION = 40000  # ~11 Hours
 
 def get_driver():
-    print("🛰️ Attempting to Auto-Locate Chrome Driver...", flush=True)
+    print("🛰️ Auto-Detecting Chrome Environment...", flush=True)
     options = Options()
     options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
@@ -38,36 +38,28 @@ def get_driver():
     options.add_argument("--disable-gpu")
     options.add_argument("--remote-debugging-port=9222")
     
-    # Force Kaggle Internal Binary Path
-    options.binary_location = "/usr/bin/google-chrome"
+    # NOTE: binary_location is removed to allow Selenium to auto-detect system Chrome
     
     driver = None
     
-    # Strategy 1: Webdriver Manager (Download matching version)
+    # Strategy 1: Built-in Selenium Manager (Zero-Config)
     try:
-        print("📥 Strategy 1: Downloading compatible driver...", flush=True)
-        driver_path = ChromeDriverManager().install()
-        service = Service(driver_path)
-        driver = webdriver.Chrome(service=service, options=options)
+        print("📥 Strategy 1: Launching with Built-in Manager...", flush=True)
+        driver = webdriver.Chrome(options=options)
         print("✅ Strategy 1 Success.", flush=True)
     except Exception as e1:
         print(f"⚠️ Strategy 1 Failed: {e1}", flush=True)
         
-        # Strategy 2: Use Kaggle's Pre-installed Path
+        # Strategy 2: Webdriver Manager Fallback
         try:
-            print("📁 Strategy 2: Checking system paths...", flush=True)
-            service = Service("/usr/bin/chromedriver")
+            print("📁 Strategy 2: Falling back to Webdriver Manager...", flush=True)
+            from webdriver_manager.chrome import ChromeDriverManager
+            service = Service(ChromeDriverManager().install())
             driver = webdriver.Chrome(service=service, options=options)
             print("✅ Strategy 2 Success.", flush=True)
         except Exception as e2:
-            print(f"❌ Strategy 2 Failed: {e2}. Attempting Final Fallback...", flush=True)
-            # Strategy 3: Standard discovery
-            try:
-                driver = webdriver.Chrome(options=options)
-                print("✅ Strategy 3 Success.", flush=True)
-            except Exception as e3:
-                print(f"🛑 ALL STRATEGIES FAILED: {e3}", flush=True)
-                return None
+            print(f"🛑 ALL STRATEGIES FAILED. Ensure Internet is ON in Kaggle Settings.", flush=True)
+            return None
 
     if driver:
         stealth(driver, languages=["en-US"], vendor="Google Inc.", platform="Linux armv8l", fix_hairline=True)
@@ -78,7 +70,7 @@ def run_agent(agent_id, cookie, target_id, target_name):
     driver = get_driver()
     
     if not driver:
-        print(f"🛑 [Agent {agent_id}] Driver creation failed. Skipping.", flush=True)
+        print(f"🛑 [Agent {agent_id}] Driver creation failed.", flush=True)
         return
 
     try:
@@ -92,8 +84,8 @@ def run_agent(agent_id, cookie, target_id, target_name):
         
         # Go to Chat
         driver.get(f"https://www.instagram.com/direct/t/{target_id}/")
-        time.sleep(8)
-        print(f"🔥 [Agent {agent_id}] TARGET LOCKED: {target_name}. Starting Pillar Strike...", flush=True)
+        time.sleep(10)
+        print(f"🔥 [Agent {agent_id}] PILLAR STRIKE ACTIVE: {target_name}", flush=True)
         
         # 🔱 THE JAVASCRIPT PILLAR INJECTOR
         driver.execute_script("""
@@ -136,12 +128,12 @@ def run_agent(agent_id, cookie, target_id, target_name):
         if driver: driver.quit()
 
 if __name__ == "__main__":
-    # Secrets replaced by GitHub Action
+    # Secrets injected by GitHub Action
     COOKIE = "REPLACE_COOKIE"
     THREAD = "REPLACE_THREAD"
     NAME = "REPLACE_NAME"
     
-    print(f"🔱 P R V R PAPA SYSTEM STARTING...", flush=True)
+    print(f"🔱 P R V R PAPA SYSTEM INITIALIZED (v130.12)", flush=True)
     
     threads = []
     for i in range(THREADS):
