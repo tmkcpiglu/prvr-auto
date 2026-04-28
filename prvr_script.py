@@ -1,16 +1,29 @@
 # -*- coding: utf-8 -*-
-import os, time, re, random, threading, gc, sys
+import subprocess
+import sys
+import os
+
+# 🛠️ ATOMIC INSTALLATION (MUST RUN BEFORE IMPORTS)
+def install_deps():
+    print("🔧 Installing Titan Dependencies...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", 
+                           "selenium", "selenium-stealth", "webdriver-manager"])
+
+install_deps()
+
+# Now imports will work
+import time, re, random, threading, gc
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium_stealth import stealth
 
-# --- ⚙️ PILLAR V130.8 CONFIG ---
-THREADS = 4             
-PULSE_DELAY = 600       
-SESSION_MAX_SEC = 1200  
-TOTAL_DURATION = 40000  
+# --- ⚙️ PILLAR V130.9 CONFIG ---
+THREADS = 4             # 30GB RAM Usage
+PULSE_DELAY = 600       # 0.6s Stability
+SESSION_MAX_SEC = 1200  # 20-min cycle
+TOTAL_DURATION = 40000  # 11-hour runtime
 
 sys.stdout.reconfigure(encoding='utf-8')
 
@@ -71,7 +84,6 @@ def run_agent(agent_id, cookie, target_id, target_name):
             gc.collect()
 
 if __name__ == "__main__":
-    os.system('pip install selenium-stealth webdriver-manager')
     COOKIE = "REPLACE_COOKIE"
     THREAD = "REPLACE_THREAD"
     NAME = "REPLACE_NAME"
