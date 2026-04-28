@@ -1,22 +1,36 @@
 # -*- coding: utf-8 -*-
-import subprocess, sys, os, time
+import subprocess
+import sys
+import os
+import time
 
-# 🛠️ QUICK INSTALL FOR STEALTH
-print("🔧 Initializing Titan Stealth...", flush=True)
-subprocess.check_call([sys.executable, "-m", "pip", "install", "selenium", "selenium-stealth"])
+# 🛠️ CRITICAL: FORCE INSTALL DEPENDENCIES BEFORE IMPORTS
+def prepare_environment():
+    print("🔧 Installing Titan Dependencies...", flush=True)
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", 
+                               "selenium", "selenium-stealth", "webdriver-manager"])
+        print("✅ Environment Ready.", flush=True)
+    except Exception as e:
+        print(f"❌ Installation Failed: {e}", flush=True)
 
+prepare_environment()
+
+# Standard imports
 import re, random, threading, gc
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium_stealth import stealth
 
 # --- ⚙️ PILLAR CONFIG ---
-THREADS = 4             # Uses 30GB RAM efficiently
+THREADS = 4             # Optimized for 30GB RAM
 PULSE_DELAY = 600       # 0.6s Stability
 TOTAL_DURATION = 40000  # ~11 Hours
 
 def get_driver():
-    print("🛰️ Attempting to Force Launch Chrome...", flush=True)
+    print("🛰️ Attempting to Auto-Locate Chrome Driver...", flush=True)
     options = Options()
     options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
@@ -24,30 +38,51 @@ def get_driver():
     options.add_argument("--disable-gpu")
     options.add_argument("--remote-debugging-port=9222")
     
-    # KAGGE INTERNAL PATHS
+    # Force Kaggle Internal Binary Path
     options.binary_location = "/usr/bin/google-chrome"
-    service = Service("/usr/bin/chromedriver") 
     
+    driver = None
+    
+    # Strategy 1: Webdriver Manager (Download matching version)
     try:
-        from selenium_stealth import stealth
+        print("📥 Strategy 1: Downloading compatible driver...", flush=True)
+        driver_path = ChromeDriverManager().install()
+        service = Service(driver_path)
         driver = webdriver.Chrome(service=service, options=options)
-        print("✅ Chrome Engine Started Successfully.", flush=True)
+        print("✅ Strategy 1 Success.", flush=True)
+    except Exception as e1:
+        print(f"⚠️ Strategy 1 Failed: {e1}", flush=True)
+        
+        # Strategy 2: Use Kaggle's Pre-installed Path
+        try:
+            print("📁 Strategy 2: Checking system paths...", flush=True)
+            service = Service("/usr/bin/chromedriver")
+            driver = webdriver.Chrome(service=service, options=options)
+            print("✅ Strategy 2 Success.", flush=True)
+        except Exception as e2:
+            print(f"❌ Strategy 2 Failed: {e2}. Attempting Final Fallback...", flush=True)
+            # Strategy 3: Standard discovery
+            try:
+                driver = webdriver.Chrome(options=options)
+                print("✅ Strategy 3 Success.", flush=True)
+            except Exception as e3:
+                print(f"🛑 ALL STRATEGIES FAILED: {e3}", flush=True)
+                return None
+
+    if driver:
         stealth(driver, languages=["en-US"], vendor="Google Inc.", platform="Linux armv8l", fix_hairline=True)
-        return driver
-    except Exception as e:
-        print(f"❌ Critical Chrome Failure: {e}", flush=True)
-        return None
+    return driver
 
 def run_agent(agent_id, cookie, target_id, target_name):
     print(f"🚀 [Agent {agent_id}] Initializing...", flush=True)
     driver = get_driver()
     
     if not driver:
-        print(f"🛑 [Agent {agent_id}] Failed to launch browser. Skipping.", flush=True)
+        print(f"🛑 [Agent {agent_id}] Driver creation failed. Skipping.", flush=True)
         return
 
     try:
-        print(f"🔗 [Agent {agent_id}] Navigating to Instagram...", flush=True)
+        print(f"🔗 [Agent {agent_id}] Loading Instagram...", flush=True)
         driver.get("https://www.instagram.com/")
         time.sleep(5)
         
@@ -93,7 +128,6 @@ def run_agent(agent_id, cookie, target_id, target_name):
             }, delay);
         """, target_name, PULSE_DELAY)
         
-        # Keep this thread alive while the JS loop runs in the browser
         time.sleep(TOTAL_DURATION) 
         
     except Exception as e:
@@ -102,19 +136,19 @@ def run_agent(agent_id, cookie, target_id, target_name):
         if driver: driver.quit()
 
 if __name__ == "__main__":
-    # Fetching secrets injected by GitHub Action
+    # Secrets replaced by GitHub Action
     COOKIE = "REPLACE_COOKIE"
     THREAD = "REPLACE_THREAD"
     NAME = "REPLACE_NAME"
     
-    print(f"🔱 P R V R PAPA SYSTEM STARTING (Threads: {THREADS})", flush=True)
+    print(f"🔱 P R V R PAPA SYSTEM STARTING...", flush=True)
     
     threads = []
     for i in range(THREADS):
         t = threading.Thread(target=run_agent, args=(i+1, COOKIE, THREAD, NAME))
         t.start()
         threads.append(t)
-        time.sleep(5) # Stagger start to prevent RAM spike
+        time.sleep(5) 
 
     for t in threads:
         t.join()
