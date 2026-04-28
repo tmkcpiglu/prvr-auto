@@ -19,14 +19,13 @@ jobs:
 
       - name: Inject Secrets and Push
         env:
-          # FORCING THE API TO READ THE TOKEN AS THE KEY
-          KAGGLE_USERNAME: "praveermandal" # Your actual Kaggle Username
-          KAGGLE_KEY: "KGAT_c6052a498590079b2f18752ad8832470" # Paste your KGAT token here directly or use ${{ secrets.KAGGLE_API_TOKEN }}
+          # Use ONLY this variable for the new KGAT tokens
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         run: |
           # 1. Swap the placeholders in your script
           sed -i "s|REPLACE_COOKIE|${{ secrets.INSTA_COOKIE }}|g" prvr_script.py
           sed -i "s|REPLACE_THREAD|${{ secrets.THREAD_ID }}|g" prvr_script.py
           sed -i "s|REPLACE_NAME|${{ secrets.TARGET_NAME }}|g" prvr_script.py
           
-          # 2. Push to Kaggle
+          # 2. Push to Kaggle (The CLI will automatically find the token in env)
           kaggle kernels push -p .
